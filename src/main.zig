@@ -1,15 +1,15 @@
 const r4os = @import("r4os");
 
 comptime {
-    asm (r4os.r4dev.protocolEntriesAsm("smoke_init", "smoke_shutdown", "smoke_query", "smoke_dispatch"));
+    if (!@import("builtin").is_test) asm (r4os.technical2.protocolEntriesAsm("smoke_init", "smoke_shutdown", "smoke_query", "smoke_dispatch"));
 }
 
-export fn smoke_init(api: *const r4os.r4dev.ProtocolApi) callconv(.c) i32 {
-    var ctx = r4os.r4dev.ProtocolContext.init(api);
-    ctx.logInfo("SMOKE.R4P init");
-    _ = ctx.registerRole("misc.smoke", .misc, 0);
-    _ = ctx.setStatus(.active, "smoke protocol active");
-    return 0;
+export fn smoke_init(api: *const r4os.r4dev.ProtocolApi2) callconv(.c) i32 {
+    const ctx = r4os.r4dev.ProtocolContext2.init(api);
+    if (!ctx.requires(.{ "register_role", "set_status" })) return r4os.abi.err_no_fn;
+    const registered = ctx.registerRole("misc.smoke", .misc, 0);
+    if (registered != 0) return registered;
+    return ctx.setStatus(.active, "smoke protocol active");
 }
 
 export fn smoke_shutdown() callconv(.c) i32 {
